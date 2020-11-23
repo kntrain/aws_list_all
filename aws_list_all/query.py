@@ -8,6 +8,7 @@ from datetime import datetime
 from functools import partial
 from multiprocessing.pool import ThreadPool
 from random import shuffle
+from sys import stdout
 from time import time
 from traceback import print_exc
 
@@ -224,6 +225,63 @@ def do_query(services, selected_regions=(), selected_operations=(), verbose=0, p
     for result_type in (RESULT_NOTHING, RESULT_SOMETHING, RESULT_NO_ACCESS, RESULT_ERROR):
         for result in sorted(results_by_type[result_type]):
             print(*result)
+
+
+def print_query(services, selected_regions=(), selected_operations=(), verbose=0, parallel=32, selected_profile=None):
+    """For the given services, execute all selected operations (default: all) in selected regions
+    (default: all)"""
+    to_run = []
+    print('Building set of queries to execute...')
+    for service in services:
+        for region in get_regions_for_service(service, selected_regions):
+            for operation in get_listing_operations(service, region, selected_operations, selected_profile):
+                if verbose > 0:
+                    region_name = region or 'n/a'
+                    print('Service: {: <28} | Region: {:<15} | Operation: {}'.format(service, region_name, operation))
+
+                to_run.append([service, region, operation, selected_profile])
+    shuffle(to_run)  # Distribute requests across endpoints
+    results_by_type = defaultdict(list)
+    services_in_grid = set()
+    print('...done. Executing queries...')
+    # the `with` block is a workaround for a bug: https://bugs.python.org/issue35629
+    with contextlib.closing(ThreadPool(parallel)) as pool:
+        for result in pool.imap_unordered(partial(acquire_listing, verbose), to_run):
+            #print('RESULT: ')
+            #print (str(result[0]))
+            #print('\n')
+            results_by_type[result[0]].append(result)
+            services_in_grid.add(result[1])
+            if verbose > 1:
+                print('ExecutedQueryResult: {}'.format(result))
+            else:
+                print(result[0][-1], end='')
+                sys.stdout.flush()
+    print('...done<br>\n')
+    print('<h2>HTML Table</h2>\n')
+    print('<table style="width:100%">')
+    print('    <tr>\n')
+    print('        <th>Service</th>\n')
+    print('        <th>None Found</th>\n')
+    print('        <th>Some Found</th>\n')
+    print('        <th>No Access</th>\n')
+    print('        <th>Error</th>\n')
+    print('    </tr>\n')
+    #print('        <td>Some Service</td>\n')
+    rest_by_type = defaultdict(list)
+    for service_type in sorted(services_in_grid):
+        print('    <tr>\n')
+        print('        <td>' + service_type + '</td>\n')
+        for result_type in (RESULT_NOTHING, RESULT_SOMETHING, RESULT_NO_ACCESS, RESULT_ERROR):
+            print('        <td>')
+            for result in filter(lambda x: x[1] == service_type, sorted(results_by_type[result_type])):
+                print('<div class="' + str(result[2]) + '">')
+                print(str(result[3]))
+                print('</div><br>')
+                print('<br>')
+            print('        </td>')
+        print('    </tr>\n')
+    print('</table>')
 
 
 def acquire_listing(verbose, what):
