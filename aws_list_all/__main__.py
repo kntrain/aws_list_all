@@ -11,7 +11,7 @@ from sys import exit, stderr
 from .introspection import (
     get_listing_operations, get_services, get_verbs, introspect_regions_for_service, recreate_caches
 )
-from .query import do_list_files, do_query
+from .query import do_list_files, do_query, print_query
 
 
 def increase_limit_nofiles():
