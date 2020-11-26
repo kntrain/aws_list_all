@@ -231,7 +231,7 @@ def print_query(services, selected_regions=(), selected_operations=(), verbose=0
     """For the given services, execute all selected operations (default: all) in selected regions
     (default: all)"""
     to_run = []
-    print('Building set of queries to execute...')
+    #print('Building set of queries to execute...')
     for service in services:
         for region in get_regions_for_service(service, selected_regions):
             for operation in get_listing_operations(service, region, selected_operations, selected_profile):
@@ -242,8 +242,10 @@ def print_query(services, selected_regions=(), selected_operations=(), verbose=0
                 to_run.append([service, region, operation, selected_profile])
     shuffle(to_run)  # Distribute requests across endpoints
     results_by_type = defaultdict(list)
+    results_by_region = defaultdict(lambda: defaultdict(list))
     services_in_grid = set()
-    print('...done. Executing queries...')
+    regions_in_grid = set()
+    #print('...done. Executing queries...')
     # the `with` block is a workaround for a bug: https://bugs.python.org/issue35629
     with contextlib.closing(ThreadPool(parallel)) as pool:
         for result in pool.imap_unordered(partial(acquire_listing, verbose), to_run):
@@ -251,37 +253,52 @@ def print_query(services, selected_regions=(), selected_operations=(), verbose=0
             #print (str(result[0]))
             #print('\n')
             results_by_type[result[0]].append(result)
+            results_by_region[result[2]][result[0]].append(result)
             services_in_grid.add(result[1])
+            regions_in_grid.add(result[2])
             if verbose > 1:
                 print('ExecutedQueryResult: {}'.format(result))
             else:
-                print(result[0][-1], end='')
+                #print(result[0][-1], end='')
                 sys.stdout.flush()
-    print('...done<br>\n')
-    print('<h2>HTML Table</h2>\n')
+    #print('...done<br>\n')
+    print('<h2>AWS_list_all</h2><br>\n')
+    print('Following list of resources has been generated from your AWS account:<br><br>')
     print('<table style="width:100%">')
     print('    <tr>\n')
     print('        <th>Service</th>\n')
-    print('        <th>None Found</th>\n')
-    print('        <th>Some Found</th>\n')
-    print('        <th>No Access</th>\n')
-    print('        <th>Error</th>\n')
+    for region_column in sorted(results_by_region):
+        print('<th>' + str(region_column) + '</th>\n')
+    #print('        <th>None Found</th>\n')
+    #print('        <th>Some Found</th>\n')
+    #print('        <th>No Access</th>\n')
+    #print('        <th>Error</th>\n')
     print('    </tr>\n')
-    #print('        <td>Some Service</td>\n')
     rest_by_type = defaultdict(list)
     for service_type in sorted(services_in_grid):
         print('    <tr>\n')
         print('        <td>' + service_type + '</td>\n')
-        for result_type in (RESULT_NOTHING, RESULT_SOMETHING, RESULT_NO_ACCESS, RESULT_ERROR):
+        for result_region in sorted(results_by_region):
             print('        <td>')
-            for result in filter(lambda x: x[1] == service_type, sorted(results_by_type[result_type])):
-                print('<div class="' + str(result[2]) + '">')
-                print(str(result[3]))
-                print('</div><br>')
-                print('<br>')
+            for result_type in (RESULT_NOTHING, RESULT_SOMETHING, RESULT_NO_ACCESS, RESULT_ERROR):
+                for result in filter(lambda x: x[1] == service_type, sorted(results_by_region[result_region][result_type])):
+                    print('<div class="' + status_switch(result_type) + '">')
+                    print(str(result[3]))
+                    print('</div><br>')
+                    #print('<br>')
             print('        </td>')
         print('    </tr>\n')
     print('</table>')
+
+
+def status_switch(arg):
+    switcher = {
+        '---': 'nfound',
+        '+++': 'found',
+        '!!!': 'error',
+        '>:|': 'access'
+    }
+    return switcher.get(arg, '')
 
 
 def acquire_listing(verbose, what):

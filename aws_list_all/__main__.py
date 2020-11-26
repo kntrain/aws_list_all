@@ -149,29 +149,29 @@ def main():
     viewhtml.add_argument('-v', '--verbose', action='count', help='Print detailed info during run')
     viewhtml.add_argument('-c', '--profile', help='Use a specific .aws/credentials profile.')
 
-    region_colors = {
-        'us-east-2':'rgb(255,0,0)',
-        'us-west-1':'rgb(255,212,0)',
-        'us-west-2':'rgb(255,255,0)',
-        'af-south-1':'rgb(191,255,0)',
-        'ap-east-1':'rgb(106,255,0)',
-        'ap-south-1':'rgb(0,234,255)',
-        'ap-northeast-3':'rgb(0,149,255)',
-        'ap-northeast-2':'rgb(0,64,255)',
-        'ap-northeast-1':'rgb(170,0,255)',
-        'ap-southeast-2':'rgb(255,0,170)',
-        'ap-southeast-1':'rgb(237,185,185)',
-        'ca-central-1':'rgb(231,233,185)',
-        'cn-north-1':'rgb(185,237,224)',
-        'cn-northeast-1':'rgb(185,215,237)',
-        'eu-central-1':'rgb(220,185,237)',
-        'eu-west-1':'rgb(143,35,35)',
-        'eu-west-2':'rgb(143,106,35)',
-        'eu-west-3':'rgb(79,143,35)',
-        'eu-south-1':'rgb(35,98,143)',
-        'eu-north-1':'rgb(107,35,143)',
-        'me-south-1':'rgb(0,0,0)',
-        'sa-east-1':'rgb(115,115,115)'}
+    # region_colors = {
+    #     'us-east-2':'rgb(255,0,0)',
+    #     'us-west-1':'rgb(255,212,0)',
+    #     'us-west-2':'rgb(255,255,0)',
+    #     'af-south-1':'rgb(191,255,0)',
+    #     'ap-east-1':'rgb(106,255,0)',
+    #     'ap-south-1':'rgb(0,234,255)',
+    #     'ap-northeast-3':'rgb(0,149,255)',
+    #     'ap-northeast-2':'rgb(0,64,255)',
+    #     'ap-northeast-1':'rgb(170,0,255)',
+    #     'ap-southeast-2':'rgb(255,0,170)',
+    #     'ap-southeast-1':'rgb(237,185,185)',
+    #     'ca-central-1':'rgb(231,233,185)',
+    #     'cn-north-1':'rgb(185,237,224)',
+    #     'cn-northeast-1':'rgb(185,215,237)',
+    #     'eu-central-1':'rgb(220,185,237)',
+    #     'eu-west-1':'rgb(143,35,35)',
+    #     'eu-west-2':'rgb(143,106,35)',
+    #     'eu-west-3':'rgb(79,143,35)',
+    #     'eu-south-1':'rgb(35,98,143)',
+    #     'eu-north-1':'rgb(107,35,143)',
+    #     'me-south-1':'rgb(0,0,0)',
+    #     'sa-east-1':'rgb(115,115,115)'}
 
     # Finally, refreshing the service/region caches comes last.
     caches = subparsers.add_parser(
@@ -244,38 +244,17 @@ def main():
         print('<!DOCTYPE html>\n<html>\n')
         print('<head>\n<style>\n')
         print('table, th, td {border: 1px solid black; border-collapse: collapse;}\n')
-        for region in region_colors:
-            print('.' + region + '{border: 5px solid ' + region_colors[region]
-                + '; padding: 10px; position: relative;}\n'
-                + '.' + region + ':after {margin: -1rem; content: "'
-                +  region.upper() + '"; font-size: 40px; position: absolute; '
-                + 'color: rgb(210, 210, 210); z-index: -1; left: 50%; margin-left: -20%;}\n')
-        #print('#us-east-2 {border: 5px solid rgb(255,0,0);}\n'
-        #    + '#us-east-1 {border: 5px solid rgb(255,127,0);}\n'
-        #    + '#us-west-1 {border: 5px solid rgb(255,212,0);}\n'
-        #    + '#us-west-2 {border: 5px solid rgb(255,255,0);}\n'
-        #    + '#af-south-1 {border: 5px solid rgb(191,255,0);}\n'
-        #    + '#ap-east-1 {border: 5px solid rgb(106,255,0);}\n'
-        #    + '#ap-south-1 {border: 5px solid rgb(0,234,255);}\n'
-        #    + '#ap-northeast-3 {border: 5px solid rgb(0,149,255);}\n'
-        #    + '#ap-northeast-2 {border: 5px solid rgb(0,64,255);}\n'
-        #    + '#ap-northeast-1 {border: 5px solid rgb(170,0,255);}\n'
-        #    + '#ap-southeast-2 {border: 5px solid rgb(255,0,170);}\n'
-        #    + '#ap-southeast-1 {border: 5px solid rgb(237,185,185);}\n'
-        #    + '#ca-central-1 {border: 5px solid rgb(231,233,185);}\n'
-        #    + '#cn-north-1 {border: 5px solid rgb(185,237,224);}\n'
-        #    + '#cn-northeast-1 {border: 5px solid rgb(185,215,237);}\n'
-        #    + '#eu-central-1 {border: 5px solid rgb(220,185,237);}\n'
-        #    + '.eu-west-1 {border: 5px solid rgb(143,35,35); padding: 10px; position: relative;}\n'
-        #    + '.eu-west-1:after {margin: -1rem; content: "EU-WEST-1"; font-size: 40px; position: absolute; '
-        #    + 'color: rgb(210, 210, 210); z-index: -1; left: 50%; margin-left: -20%;}\n'
-        #    + '#eu-west-2 {border: 5px solid rgb(143,106,35);}\n'
-        #    + '#eu-west-3 {border: 5px solid rgb(79,143,35);}\n'
-        #    + '#eu-south-1 {border: 5px solid rgb(35,98,143);}\n'
-        #    + '#eu-north-1 {border: 5px solid rgb(107,35,143);}\n'
-        #    + '#me-south-1 {border: 5px solid rgb(0,0,0);}\n'
-        #    + '#sa-east-1 {border: 5px solid rgb(115,115,115);}\n')
-        print('th, td {padding: 10px;}')
+        print('.nfound {border: 10px solid Orange; padding: 10px;}\n')
+        print('.found {border: 10px solid LightGreen; padding: 10px;}\n')
+        print('.error {border: 10px solid Red; padding: 10px;}\n')
+        print('.access {border: 10px solid Blue; padding: 10px;}\n')
+        # for region in region_colors:
+        #     print('.' + region + '{border: 5px solid ' + region_colors[region]
+        #         + '; padding: 10px; position: relative;}\n'
+        #         + '.' + region + ':after {margin: -1rem; content: "'
+        #         +  region.upper() + '"; font-size: 40px; position: absolute; '
+        #         + 'color: rgb(210, 210, 210); z-index: -1; left: 50%; margin-left: -20%;}\n')
+        #print('th, td {padding: 10px;}')
         print('</style>\n</head>\n<body>\n')
         if args.directory:
             try:
@@ -297,7 +276,7 @@ def main():
         sys.stdout = origout
 
         new = 2
-        url = "/home/devuser/aws_list_all/test.html"
+        url = "/home/devuser/BA-thesis/aws_list_all/test.html"
         webbrowser.open(url,new=new)
     elif args.command == 'recreate-caches':
         increase_limit_nofiles()
