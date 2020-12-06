@@ -341,22 +341,31 @@ def acquire_listing(verbose, what):
             if not_available_string in str(exc):
                 result_type = RESULT_NOTHING
 
-        listing = Listing(service, region, operation, dummy_response(), profile)
+        listing = Listing(service, region, operation + '_', dummy_response(), profile)
         with open('{}_{}_{}_{}.json'.format(service, operation, region, profile), 'w') as jsonfile:
                 json.dump(listing.to_json(), jsonfile, default=datetime.isoformat)
         return (result_type, service, region, operation, profile, repr(exc))
 
 
-def do_list_files(filenames, verbose=0):
+def do_list_files(filenames, verbose=0, not_found=False, errors=False):
     """Print out a rudimentary summary of the Listing objects contained in the given files"""
     for listing_filename in filenames:
         listing = Listing.from_json(json.load(open(listing_filename, 'rb')))
         resources = listing.resources
         truncated = False
+        error = False
         if 'truncated' in resources:
             truncated = resources['truncated']
             del resources['truncated']
+        if 'Error' in resources:
+            error = True
+            del resources['Error']
+            setattr(listing, 'operation', listing.operation[:-1])
         for resource_type, value in resources.items():
+            if not(not_found) and len(value) == 0 and not(error):
+                continue
+            if not(errors) and error:
+                continue
             len_string = '> {}'.format(len(value)) if truncated else str(len(value))
             print(listing.service, listing.region, listing.operation, resource_type, len_string)
             if verbose > 0:

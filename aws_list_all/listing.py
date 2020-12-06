@@ -366,6 +366,10 @@ class Listing(object):
                 g for g in response.get('CacheSubnetGroups', []) if g.get('CacheSubnetGroupName') != 'default'
             ]
 
+        # Insert marker for error during query
+        if self.operation[-1] == '_':
+            response['Error'] = []
+
         # interpret nextToken in several services
         if (self.service, self.operation) in (('inspector', 'ListFindings'), ('logs', 'DescribeLogGroups')):
             if response.get('nextToken'):
