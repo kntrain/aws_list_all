@@ -13,7 +13,7 @@ from time import time
 from traceback import print_exc
 
 from .introspection import get_listing_operations, get_regions_for_service
-from .listing import Listing
+from .listing import Listing, run_raw_listing_operation
 
 RESULT_NOTHING = '---'
 RESULT_SOMETHING = '+++'
@@ -341,6 +341,9 @@ def acquire_listing(verbose, what):
             if not_available_string in str(exc):
                 result_type = RESULT_NOTHING
 
+        listing = Listing(service, region, operation, dummy_response(), profile)
+        with open('{}_{}_{}_{}.json'.format(service, operation, region, profile), 'w') as jsonfile:
+                json.dump(listing.to_json(), jsonfile, default=datetime.isoformat)
         return (result_type, service, region, operation, profile, repr(exc))
 
 
@@ -388,3 +391,9 @@ def do_list_files(filenames, verbose=0):
                         print('    - ', item)
                 if truncated:
                     print('    - ... (more items, query truncated)')
+
+def dummy_response():
+    metadata = {'RetryAttempts': 0, 'HTTPStatusCode': 200, 'RequestId': '0000', 'HTTPHeaders': {}}
+    jsondata = {'Addresses': [], 'ResponseMetadata': metadata}
+    jsondata = json.dumps(jsondata)
+    return json.loads(jsondata)
