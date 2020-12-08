@@ -279,26 +279,24 @@ def print_query(services, selected_regions=(), selected_operations=(), verbose=0
         print('    <tr>\n')
         print('        <td>' + service_type + '</td>\n')
         for result_region in sorted(results_by_region):
-            print('        <td>')
+            print('        <td>\n')
             for result_type in (RESULT_NOTHING, RESULT_SOMETHING, RESULT_NO_ACCESS, RESULT_ERROR):
+                empty_type = True
                 for result in filter(lambda x: x[1] == service_type, sorted(results_by_region[result_region][result_type])):
+                    if empty_type:
+                        print('        <button type="button" class="' + status_switch(result_type + 'col') + '">'
+                            + status_switch(result_type + 'box') + '</button>\n')
+                        print('        <div class="content">\n')
+                        empty_type = False
                     print('<div class="' + status_switch(result_type) + '">')
                     print(str(result[3]))
                     print('</div><br>')
                     #print('<br>')
+                if not(empty_type):
+                    print('        </div>')
             print('        </td>')
         print('    </tr>\n')
     print('</table>')
-
-
-def status_switch(arg):
-    switcher = {
-        '---': 'nfound',
-        '+++': 'found',
-        '!!!': 'error',
-        '>:|': 'access'
-    }
-    return switcher.get(arg, '')
 
 
 def acquire_listing(verbose, what):
@@ -406,3 +404,20 @@ def dummy_response():
     jsondata = {'Addresses': [], 'ResponseMetadata': metadata}
     jsondata = json.dumps(jsondata)
     return json.loads(jsondata)
+
+def status_switch(arg):
+    switcher = {
+        '---': 'nfound',
+        '+++': 'found',
+        '!!!': 'error',
+        '>:|': 'denied',
+        '---box': 'No Resources Found',
+        '+++box': 'Resources Found',
+        '!!!box': 'Error During Query',
+        '>:|box': 'Missing Permissions',
+        '---col': 'nCollapse',
+        '+++col': 'fCollapse',
+        '!!!col': 'eCollapse',
+        '>:|col': 'dCollapse'
+    }
+    return switcher.get(arg, '')

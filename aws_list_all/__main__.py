@@ -254,7 +254,7 @@ def main():
         print('.nfound {border: 10px solid Orange; padding: 10px;}\n')
         print('.found {border: 10px solid LightGreen; padding: 10px;}\n')
         print('.error {border: 10px solid Red; padding: 10px;}\n')
-        print('.access {border: 10px solid Blue; padding: 10px;}\n')
+        print('.denied {border: 10px solid Blue; padding: 10px;}\n')
         # for region in region_colors:
         #     print('.' + region + '{border: 5px solid ' + region_colors[region]
         #         + '; padding: 10px; position: relative;}\n'
@@ -262,6 +262,19 @@ def main():
         #         +  region.upper() + '"; font-size: 40px; position: absolute; '
         #         + 'color: rgb(210, 210, 210); z-index: -1; left: 50%; margin-left: -20%;}\n')
         #print('th, td {padding: 10px;}')
+        print('.nCollapse {background-color: Orange; color: white; cursor: pointer; '
+            + 'padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}\n')
+        print('.fCollapse {background-color: LightGreen; color: white; cursor: pointer; '
+            + 'padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}\n')
+        print('.eCollapse {background-color: Red; color: white; cursor: pointer; '
+            + 'padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}\n')
+        print('.dCollapse {background-color: Blue; color: white; cursor: pointer; '
+            + 'padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}\n')
+        print('.active, .nCollapse:hover {background-color: #777;}\n')
+        print('.active, .fCollapse:hover {background-color: #777;}\n')
+        print('.active, .eCollapse:hover {background-color: #777;}\n')
+        print('.active, .dCollapse:hover {background-color: #777;}\n')
+        print('.content {display: none; overflow: hidden; background-color: #f1f1f1;}\n')
         print('</style>\n</head>\n<body>\n')
         if args.directory:
             try:
@@ -279,6 +292,22 @@ def main():
             parallel=args.parallel,
             selected_profile=args.profile
         )
+        print('<script>\n'
+            #+ 'var coll = document.getElementsByClassName("collapsible");\n'
+            + 'var coll = document.querySelectorAll(".nCollapse,.fCollapse,.eCollapse,.dCollapse");'
+            + 'var i;\n'
+            + 'for (i = 0; i < coll.length; i++) {\n'
+            + '  coll[i].addEventListener("click", function() {\n'
+            + '    this.classList.toggle("active");\n'
+            + '    var content = this.nextElementSibling;\n'
+            + '    if (content.style.display === "block") {\n'
+            + '      content.style.display = "none";\n'
+            + '    } else {\n'
+            + '      content.style.display = "block";\n'
+            + '    }\n'
+            + '  });\n'
+            + '}\n')
+        print('</script>\n')
         print('\n</body>\n</html>')
         sys.stdout = origout
 
