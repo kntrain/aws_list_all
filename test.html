@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+<style>
+
+table, th, td {border: 1px solid black; border-collapse: collapse;}
+
+.nfound {border: 10px solid Orange; padding: 10px;}
+
+.found {border: 10px solid LightGreen; padding: 10px;}
+
+.error {border: 10px solid Red; padding: 10px;}
+
+.denied {border: 10px solid Blue; padding: 10px;}
+
+.nCollapse {background-color: Orange; color: white; cursor: pointer; padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}
+
+.fCollapse {background-color: LightGreen; color: white; cursor: pointer; padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}
+
+.eCollapse {background-color: Red; color: white; cursor: pointer; padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}
+
+.dCollapse {background-color: Blue; color: white; cursor: pointer; padding: 14px; width: 100%; border: none; text-align: left; font-size: 20px;}
+
+.active, .nCollapse:hover {background-color: #777;}
+
+.active, .fCollapse:hover {background-color: #777;}
+
+.active, .eCollapse:hover {background-color: #777;}
+
+.active, .dCollapse:hover {background-color: #777;}
+
+.content {display: none; overflow: hidden; background-color: #f1f1f1;}
+
+</style>
+</head>
+<body>
+
+
+<h2>AWS_list_all</h2><br>
+
+Following list of resources has been generated from your AWS account:<br><br>
+<table style="width:100%">
+    <tr>
+
+        <th>Service</th>
+
+<th>af-south-1</th>
+
+<th>ap-east-1</th>
+
+<th>ap-northeast-1</th>
+
+<th>ap-south-1</th>
+
+<th>ap-southeast-1</th>
+
+<th>eu-central-1</th>
+
+<th>eu-south-1</th>
+
+<th>eu-west-3</th>
+
+<th>me-south-1</th>
+
+<th>sa-east-1</th>
+
+<th>us-west-2</th>
+
+    </tr>
+
+    <tr>
+
+        <td>kms</td>
+
+        <td>
+
+        <button type="button" class="eCollapse">Error During Query</button>
+
+        <div class="content">
+
+<div class="error">
+DescribeCustomKeyStores
+</div><br>
+<div class="error">
+ListAliases
+</div><br>
+<div class="error">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="eCollapse">Error During Query</button>
+
+        <div class="content">
+
+<div class="error">
+DescribeCustomKeyStores
+</div><br>
+<div class="error">
+ListAliases
+</div><br>
+<div class="error">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="dCollapse">Missing Permissions</button>
+
+        <div class="content">
+
+<div class="denied">
+DescribeCustomKeyStores
+</div><br>
+<div class="denied">
+ListAliases
+</div><br>
+<div class="denied">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="dCollapse">Missing Permissions</button>
+
+        <div class="content">
+
+<div class="denied">
+DescribeCustomKeyStores
+</div><br>
+<div class="denied">
+ListAliases
+</div><br>
+<div class="denied">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="dCollapse">Missing Permissions</button>
+
+        <div class="content">
+
+<div class="denied">
+DescribeCustomKeyStores
+</div><br>
+<div class="denied">
+ListAliases
+</div><br>
+<div class="denied">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="nCollapse">No Resources Found</button>
+
+        <div class="content">
+
+<div class="nfound">
+DescribeCustomKeyStores
+</div><br>
+<div class="nfound">
+ListAliases
+</div><br>
+<div class="nfound">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="eCollapse">Error During Query</button>
+
+        <div class="content">
+
+<div class="error">
+DescribeCustomKeyStores
+</div><br>
+<div class="error">
+ListAliases
+</div><br>
+<div class="error">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="dCollapse">Missing Permissions</button>
+
+        <div class="content">
+
+<div class="denied">
+DescribeCustomKeyStores
+</div><br>
+<div class="denied">
+ListAliases
+</div><br>
+<div class="denied">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="eCollapse">Error During Query</button>
+
+        <div class="content">
+
+<div class="error">
+DescribeCustomKeyStores
+</div><br>
+<div class="error">
+ListAliases
+</div><br>
+<div class="error">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="dCollapse">Missing Permissions</button>
+
+        <div class="content">
+
+<div class="denied">
+DescribeCustomKeyStores
+</div><br>
+<div class="denied">
+ListAliases
+</div><br>
+<div class="denied">
+ListKeys
+</div><br>
+        </div>
+        </td>
+        <td>
+
+        <button type="button" class="nCollapse">No Resources Found</button>
+
+        <div class="content">
+
+<div class="nfound">
+DescribeCustomKeyStores
+</div><br>
+<div class="nfound">
+ListAliases
+</div><br>
+<div class="nfound">
+ListKeys
+</div><br>
+        </div>
+        </td>
+    </tr>
+
+</table>
+<script>
+var coll = document.querySelectorAll(".nCollapse,.fCollapse,.eCollapse,.dCollapse");var i;
+for (i = 0; i < coll.length; i++) {
+  coll[i].addEventListener("click", function() {
+    this.classList.toggle("active");
+    var content = this.nextElementSibling;
+    if (content.style.display === "block") {
+      content.style.display = "none";
+    } else {
+      content.style.display = "block";
+    }
+  });
+}
+
+</script>
+
+
+</body>
+</html>

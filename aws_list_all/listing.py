@@ -1,3 +1,4 @@
+import json
 import pprint
 
 import boto3
@@ -81,12 +82,13 @@ def run_raw_listing_operation(service, region, operation, profile):
 
 class Listing(object):
     """Represents a listing operation on an AWS service and its result"""
-    def __init__(self, service, region, operation, response, profile):
+    def __init__(self, service, region, operation, response, profile, directory='./'):
         self.service = service
         self.region = region
         self.operation = operation
         self.response = response
         self.profile = profile
+        self.directory = './'
 
     def to_json(self):
         return {
@@ -143,6 +145,11 @@ class Listing(object):
         complete = True
 
         del response['ResponseMetadata']
+
+        # Insert marker for missing permissions during query
+        # if self.operation[-1] == '|':
+        #     response['Denied'] = []
+        #     self.operation = self.operation[:-1]
 
         # Transmogrify strange cloudfront results into standard AWS format
         if self.service == 'cloudfront':
@@ -233,7 +240,11 @@ class Listing(object):
 
         # Special handling for service-level kms keys; derived from alias name.
         if self.service == 'kms' and self.operation == 'ListKeys':
-            list_aliases = run_raw_listing_operation(self.service, self.region, 'ListAliases', self.profile)
+            #list_aliases = run_raw_listing_operation(self.service, self.region, 'ListAliases', self.profile)
+            aliases_file = '{}_{}_{}_{}.json'.format(self.service, 'ListAliases', self.region, self.profile)
+            aliases_file = self.directory + aliases_file
+            aliases_listing = Listing.from_json(json.load(open(aliases_file, 'rb')))
+            list_aliases = aliases_listing.response
             service_key_ids = [
                 k.get('TargetKeyId') for k in list_aliases.get('Aliases', [])
                 if k.get('AliasName').lower().startswith('alias/aws')
@@ -338,7 +349,11 @@ class Listing(object):
 
         # Filter default Internet Gateways
         if self.service == 'ec2' and self.operation == 'DescribeInternetGateways':
-            describe_vpcs = run_raw_listing_operation(self.service, self.region, 'DescribeVpcs', self.profile)
+            #describe_vpcs = run_raw_listing_operation(self.service, self.region, 'DescribeVpcs', self.profile)
+            vpcs_file = '{}_{}_{}_{}.json'.format(self.service, 'DescribeVpcs', self.region, self.profile)
+            vpcs_file = self.directory + vpcs_file
+            vpcs_listing = Listing.from_json(json.load(open(vpcs_file, 'rb')))
+            describe_vpcs = vpcs_listing.response
             vpcs = {v['VpcId']: v for v in describe_vpcs.get('Vpcs', [])}
             internet_gateways = []
             for ig in response['InternetGateways']:
@@ -365,10 +380,6 @@ class Listing(object):
             response['CacheSubnetGroups'] = [
                 g for g in response.get('CacheSubnetGroups', []) if g.get('CacheSubnetGroupName') != 'default'
             ]
-
-        # Insert marker for error during query
-        if self.operation[-1] == '_':
-            response['Error'] = []
 
         # interpret nextToken in several services
         if (self.service, self.operation) in (('inspector', 'ListFindings'), ('logs', 'DescribeLogGroups')):

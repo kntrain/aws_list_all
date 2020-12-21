@@ -87,6 +87,7 @@ def main():
     show.add_argument('-v', '--verbose', action='count', help='print given listing files with detailed info')
     show.add_argument('-n', '--not_found', default=False, type=bool, help='additionally print listing files of resources not found')
     show.add_argument('-e', '--errors', default=False, type=bool, help='additionally print listing files of resources where queries resulted in errors')
+    show.add_argument('-d', '--denied', default=False, type=bool, help='additionally print listing files of resources with "missing permission" errors')
 
     # Introspection debugging is not the main function. So we put it all into a subcommand.
     introspect = subparsers.add_parser(
@@ -221,7 +222,8 @@ def main():
                 args.listingfile, 
                 verbose=args.verbose or 0,
                 not_found=args.not_found,
-                errors=args.errors
+                errors=args.errors,
+                denied=args.denied
             )
         else:
             show.print_help()

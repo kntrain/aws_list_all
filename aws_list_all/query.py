@@ -312,9 +312,9 @@ def acquire_listing(verbose, what):
         if verbose > 1:
             print(what, '...request successful')
             print("timing [success]:", duration, what)
+        with open('{}_{}_{}_{}.json'.format(service, operation, region, profile), 'w') as jsonfile:
+            json.dump(listing.to_json(), jsonfile, default=datetime.isoformat)
         if listing.resource_total_count > 0:
-            with open('{}_{}_{}_{}.json'.format(service, operation, region, profile), 'w') as jsonfile:
-                json.dump(listing.to_json(), jsonfile, default=datetime.isoformat)
             return (RESULT_SOMETHING, service, region, operation, profile, ', '.join(listing.resource_types))
         else:
             return (RESULT_NOTHING, service, region, operation, profile, ', '.join(listing.resource_types))
@@ -339,30 +339,42 @@ def acquire_listing(verbose, what):
             if not_available_string in str(exc):
                 result_type = RESULT_NOTHING
 
-        listing = Listing(service, region, operation + '_', dummy_response(), profile)
+        response = dummy_response()
+        if result_type == RESULT_NO_ACCESS:
+            response['Denied'] = []
+        elif result_type == RESULT_ERROR:
+            response['Error'] = []
+        listing = Listing(service, region, operation, response, profile)
         with open('{}_{}_{}_{}.json'.format(service, operation, region, profile), 'w') as jsonfile:
                 json.dump(listing.to_json(), jsonfile, default=datetime.isoformat)
         return (result_type, service, region, operation, profile, repr(exc))
 
 
-def do_list_files(filenames, verbose=0, not_found=False, errors=False):
+def do_list_files(filenames, verbose=0, not_found=False, errors=False, denied=False):
     """Print out a rudimentary summary of the Listing objects contained in the given files"""
+    dir = filenames[0][:filenames[0].rfind('/') + 1]
     for listing_filename in filenames:
         listing = Listing.from_json(json.load(open(listing_filename, 'rb')))
+        setattr(listing, 'directory', dir)
         resources = listing.resources
         truncated = False
-        error = False
+        was_error = False
+        was_denied = False
         if 'truncated' in resources:
             truncated = resources['truncated']
             del resources['truncated']
+        if 'Denied' in resources:
+            was_denied = True
+            del resources['Denied']
         if 'Error' in resources:
-            error = True
+            was_error = True
             del resources['Error']
-            setattr(listing, 'operation', listing.operation[:-1])
         for resource_type, value in resources.items():
-            if not(not_found) and len(value) == 0 and not(error):
+            if not(not_found) and len(value) == 0 and not(was_error) and not(was_denied):
                 continue
-            if not(errors) and error:
+            if not(denied) and was_denied:
+                continue
+            if not(errors) and was_error:
                 continue
             len_string = '> {}'.format(len(value)) if truncated else str(len(value))
             print(listing.service, listing.region, listing.operation, resource_type, len_string)
