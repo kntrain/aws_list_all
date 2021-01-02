@@ -80,15 +80,62 @@ def run_raw_listing_operation(service, region, operation, profile):
     return getattr(client, api_to_method_mapping[operation])(**parameters)
 
 
+class ListingFile(object):
+
+    def __init__(self, input, directory='./'):
+        self.input = input
+        self.directory = directory
+
+    @property
+    def resources(self):
+        response = self.input.resources
+
+        # Special handling for service-level kms keys; derived from alias name.
+        if self.input.service == 'kms' and self.input.operation == 'ListKeys':
+            #list_aliases = run_raw_listing_operation(self.service, self.region, 'ListAliases', self.profile)
+            aliases_file = '{}_{}_{}_{}.json'.format(self.input.service, 'ListAliases', self.input.region, self.input.profile)
+            aliases_file = self.directory + aliases_file
+            aliases_listing = Listing.from_json(json.load(open(aliases_file, 'rb')))
+            list_aliases = aliases_listing.response
+            service_key_ids = [
+                k.get('TargetKeyId') for k in list_aliases.get('Aliases', [])
+                if k.get('AliasName').lower().startswith('alias/aws')
+            ]
+            response['Keys'] = [k for k in response.get('Keys', []) if k.get('KeyId') not in service_key_ids]
+
+        # Filter default Internet Gateways
+        if self.input.service == 'ec2' and self.input.operation == 'DescribeInternetGateways':
+            #describe_vpcs = run_raw_listing_operation(self.service, self.region, 'DescribeVpcs', self.profile)
+            vpcs_file = '{}_{}_{}_{}.json'.format(self.input.service, 'DescribeVpcs', self.input.region, self.input.profile)
+            vpcs_file = self.directory + vpcs_file
+            vpcs_listing = Listing.from_json(json.load(open(vpcs_file, 'rb')))
+            describe_vpcs = vpcs_listing.response
+            vpcs = {v['VpcId']: v for v in describe_vpcs.get('Vpcs', [])}
+            internet_gateways = []
+            # print(self.response)
+            # print(response)
+            for ig in response['InternetGateways']:
+                attachments = ig.get('Attachments', [])
+                # more than one, it cannot be default.
+                if len(attachments) != 1:
+                    continue
+                vpc = attachments[0].get('VpcId')
+                if not vpcs.get(vpc, {}).get('IsDefault', False):
+                    internet_gateways.append(ig)
+            response['InternetGateways'] = internet_gateways
+
+        return response
+
+
 class Listing(object):
     """Represents a listing operation on an AWS service and its result"""
-    def __init__(self, service, region, operation, response, profile, directory='./'):
+    def __init__(self, service, region, operation, response, profile, error=''):
         self.service = service
         self.region = region
         self.operation = operation
         self.response = response
         self.profile = profile
-        self.directory = './'
+        self.error = error
 
     def to_json(self):
         return {
@@ -97,6 +144,7 @@ class Listing(object):
             'profile': self.profile,
             'operation': self.operation,
             'response': self.response,
+            'error': self.error
         }
 
     @classmethod
@@ -106,7 +154,8 @@ class Listing(object):
             region=data.get('region'),
             profile=data.get('profile'),
             operation=data.get('operation'),
-            response=data.get('response')
+            response=data.get('response'),
+            error=data.get('error')
         )
 
     @property
@@ -134,6 +183,10 @@ class Listing(object):
     def acquire(cls, service, region, operation, profile):
         """Acquire the given listing by making an AWS request"""
         response = run_raw_listing_operation(service, region, operation, profile)
+        # f = open("whatfile.txt", "a")
+        # f.write('RESPONSE: \n')
+        # f.write(str(response))
+        # f.close()
         if response['ResponseMetadata']['HTTPStatusCode'] != 200:
             raise Exception('Bad AWS HTTP Status Code', response)
         return cls(service, region, operation, response, profile)
@@ -141,6 +194,8 @@ class Listing(object):
     @property
     def resources(self):  # pylint:disable=too-many-branches
         """Transform the response data into a dict of resource names to resource listings"""
+        if not(self.response):
+            return self.response.copy()
         response = self.response.copy()
         complete = True
 
@@ -239,17 +294,16 @@ class Listing(object):
             ]
 
         # Special handling for service-level kms keys; derived from alias name.
-        if self.service == 'kms' and self.operation == 'ListKeys':
-            #list_aliases = run_raw_listing_operation(self.service, self.region, 'ListAliases', self.profile)
-            aliases_file = '{}_{}_{}_{}.json'.format(self.service, 'ListAliases', self.region, self.profile)
-            aliases_file = self.directory + aliases_file
-            aliases_listing = Listing.from_json(json.load(open(aliases_file, 'rb')))
-            list_aliases = aliases_listing.response
-            service_key_ids = [
-                k.get('TargetKeyId') for k in list_aliases.get('Aliases', [])
-                if k.get('AliasName').lower().startswith('alias/aws')
-            ]
-            response['Keys'] = [k for k in response.get('Keys', []) if k.get('KeyId') not in service_key_ids]
+        # if self.service == 'kms' and self.operation == 'ListKeys':
+        #     #list_aliases = run_raw_listing_operation(self.service, self.region, 'ListAliases', self.profile)
+        #     aliases_file = '{}_{}_{}_{}.json'.format(self.service, 'ListAliases', self.region, self.profile)
+        #     aliases_listing = Listing.from_json(json.load(open(aliases_file, 'rb')))
+        #     list_aliases = aliases_listing.response
+        #     service_key_ids = [
+        #         k.get('TargetKeyId') for k in list_aliases.get('Aliases', [])
+        #         if k.get('AliasName').lower().startswith('alias/aws')
+        #     ]
+        #     response['Keys'] = [k for k in response.get('Keys', []) if k.get('KeyId') not in service_key_ids]
 
         # Filter PUBLIC images from appstream
         if self.service == 'appstream' and self.operation == 'DescribeImages':
@@ -348,23 +402,22 @@ class Listing(object):
             response['NetworkAcls'] = [nacl for nacl in response['NetworkAcls'] if not nacl['IsDefault']]
 
         # Filter default Internet Gateways
-        if self.service == 'ec2' and self.operation == 'DescribeInternetGateways':
-            #describe_vpcs = run_raw_listing_operation(self.service, self.region, 'DescribeVpcs', self.profile)
-            vpcs_file = '{}_{}_{}_{}.json'.format(self.service, 'DescribeVpcs', self.region, self.profile)
-            vpcs_file = self.directory + vpcs_file
-            vpcs_listing = Listing.from_json(json.load(open(vpcs_file, 'rb')))
-            describe_vpcs = vpcs_listing.response
-            vpcs = {v['VpcId']: v for v in describe_vpcs.get('Vpcs', [])}
-            internet_gateways = []
-            for ig in response['InternetGateways']:
-                attachments = ig.get('Attachments', [])
-                # more than one, it cannot be default.
-                if len(attachments) != 1:
-                    continue
-                vpc = attachments[0].get('VpcId')
-                if not vpcs.get(vpc, {}).get('IsDefault', False):
-                    internet_gateways.append(ig)
-            response['InternetGateways'] = internet_gateways
+        # if self.service == 'ec2' and self.operation == 'DescribeInternetGateways':
+        #     #describe_vpcs = run_raw_listing_operation(self.service, self.region, 'DescribeVpcs', self.profile)
+        #     vpcs_file = '{}_{}_{}_{}.json'.format(self.service, 'DescribeVpcs', self.region, self.profile)
+        #     vpcs_listing = Listing.from_json(json.load(open(vpcs_file, 'rb')))
+        #     describe_vpcs = vpcs_listing.response
+        #     vpcs = {v['VpcId']: v for v in describe_vpcs.get('Vpcs', [])}
+        #     internet_gateways = []
+        #     for ig in response['InternetGateways']:
+        #         attachments = ig.get('Attachments', [])
+        #         # more than one, it cannot be default.
+        #         if len(attachments) != 1:
+        #             continue
+        #         vpc = attachments[0].get('VpcId')
+        #         if not vpcs.get(vpc, {}).get('IsDefault', False):
+        #             internet_gateways.append(ig)
+        #     response['InternetGateways'] = internet_gateways
 
         # Filter Public images from ec2.fpga images
         if self.service == 'ec2' and self.operation == 'DescribeFpgaImages':

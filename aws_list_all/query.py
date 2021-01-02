@@ -13,7 +13,7 @@ from time import time
 from traceback import print_exc
 
 from .introspection import get_listing_operations, get_regions_for_service
-from .listing import Listing, run_raw_listing_operation
+from .listing import ListingFile, Listing, run_raw_listing_operation
 
 RESULT_NOTHING = '---'
 RESULT_SOMETHING = '+++'
@@ -344,7 +344,7 @@ def acquire_listing(verbose, what):
             response['Denied'] = []
         elif result_type == RESULT_ERROR:
             response['Error'] = []
-        listing = Listing(service, region, operation, response, profile)
+        listing = Listing(service, region, operation, {}, profile, result_type)
         with open('{}_{}_{}_{}.json'.format(service, operation, region, profile), 'w') as jsonfile:
                 json.dump(listing.to_json(), jsonfile, default=datetime.isoformat)
         return (result_type, service, region, operation, profile, repr(exc))
@@ -355,26 +355,26 @@ def do_list_files(filenames, verbose=0, not_found=False, errors=False, denied=Fa
     dir = filenames[0][:filenames[0].rfind('/') + 1]
     for listing_filename in filenames:
         listing = Listing.from_json(json.load(open(listing_filename, 'rb')))
-        setattr(listing, 'directory', dir)
-        resources = listing.resources
+        #resources = listing.resources
+
+        listing_entry = ListingFile(listing, dir)
+        resources = listing_entry.resources
         truncated = False
         was_error = False
         was_denied = False
         if 'truncated' in resources:
             truncated = resources['truncated']
             del resources['truncated']
-        if 'Denied' in resources:
+        if listing.error == RESULT_NO_ACCESS:
             was_denied = True
-            del resources['Denied']
-        if 'Error' in resources:
+        if listing.error == RESULT_ERROR:
             was_error = True
-            del resources['Error']
         for resource_type, value in resources.items():
-            if not(not_found) and len(value) == 0 and not(was_error) and not(was_denied):
+            if not not_found and len(value) == 0 and not was_error and not was_denied:
                 continue
-            if not(denied) and was_denied:
+            if not denied and was_denied:
                 continue
-            if not(errors) and was_error:
+            if not errors and was_error:
                 continue
             len_string = '> {}'.format(len(value)) if truncated else str(len(value))
             print(listing.service, listing.region, listing.operation, resource_type, len_string)
