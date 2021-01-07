@@ -355,27 +355,28 @@ def do_list_files(filenames, verbose=0, not_found=False, errors=False, denied=Fa
     dir = filenames[0][:filenames[0].rfind('/') + 1]
     for listing_filename in filenames:
         listing = Listing.from_json(json.load(open(listing_filename, 'rb')))
-        #resources = listing.resources
-
         listing_entry = ListingFile(listing, dir)
         resources = listing_entry.resources
+
         truncated = False
-        was_error = False
         was_denied = False
         if 'truncated' in resources:
             truncated = resources['truncated']
             del resources['truncated']
         if listing.error == RESULT_NO_ACCESS:
             was_denied = True
-        if listing.error == RESULT_ERROR:
-            was_error = True
+            if not resources:
+                print(listing.service, listing.region, listing.operation, 'MISSING PERMISSION', '0')
+        if listing.error == RESULT_ERROR and errors:
+            print(listing.service, listing.region, listing.operation, 'ERROR', '0')
+
         for resource_type, value in resources.items():
-            if not not_found and len(value) == 0 and not was_error and not was_denied:
+            if not not_found and len(value) == 0 and not was_denied:
                 continue
             if not denied and was_denied:
                 continue
-            if not errors and was_error:
-                continue
+            if was_denied:
+                resource_type = 'MISSING PERMISSION'
             len_string = '> {}'.format(len(value)) if truncated else str(len(value))
             print(listing.service, listing.region, listing.operation, resource_type, len_string)
             if verbose > 0:
